@@ -2,6 +2,10 @@ package com.tiwarithetiger11.murari.myapplication;
 
 import android.Manifest;
 import android.app.Activity;
+import android.app.NotificationManager;
+import android.app.PendingIntent;
+import android.content.Context;
+import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.database.Cursor;
@@ -14,6 +18,8 @@ import android.os.Handler;
 import android.provider.MediaStore;
 import android.support.annotation.NonNull;
 import android.support.v4.app.ActivityCompat;
+import android.support.v4.app.NotificationCompat;
+import android.support.v4.app.NotificationManagerCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.support.v7.widget.DividerItemDecoration;
@@ -26,6 +32,7 @@ import android.view.View;
 import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
+import android.widget.RemoteViews;
 import android.widget.SeekBar;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -37,7 +44,11 @@ import java.util.Random;
 import static android.widget.Toast.LENGTH_LONG;
 
 public class MainActivity extends AppCompatActivity implements AudioManager.OnAudioFocusChangeListener {
-
+    public static NotificationCompat.Builder builder;
+    public static NotificationManager notificationManager;
+    public static int notificationid;
+    public static RemoteViews remoteViews;
+    public static Context context;
     public static ArrayList<SongInfo> _song=new ArrayList<SongInfo>();
     RecyclerView recyclerView;
     static SeekBar seekBar;
@@ -70,7 +81,7 @@ public class MainActivity extends AppCompatActivity implements AudioManager.OnAu
         prev=findViewById(R.id.prev);
         shu=findViewById(R.id.shu);
         rep=findViewById(R.id.rep);
-
+        context=this;
         rep.setBackgroundResource(R.drawable.ic_repeat_black_24dp);
         shu.setBackgroundResource(R.drawable.ic_shuffle_black_24dp);
         l=findViewById(R.id.thumbnail);
@@ -84,7 +95,8 @@ public class MainActivity extends AppCompatActivity implements AudioManager.OnAu
         checkpermission();
 
 
-
+         notificationManager=(NotificationManager)getSystemService(NOTIFICATION_SERVICE);
+         remoteViews=new RemoteViews(getPackageName(),R.layout.noti);
          shu.setOnClickListener(new View.OnClickListener() {
              @Override
              public void onClick(View view) {
@@ -274,6 +286,21 @@ public class MainActivity extends AppCompatActivity implements AudioManager.OnAu
 
                                seekBar.setProgress(0);
                             seekBar.setMax(mediaPlayer.getDuration());
+                            try{
+                              remoteViews.setImageViewUri(R.id.n_icon, Uri.parse(obj.path));
+                              remoteViews.setTextViewText(R.id.n_song,obj.songname);
+                              remoteViews.setTextViewText(R.id.n_artist,obj.artist);
+
+                                Intent notification_intent=new Intent(context,MainActivity.class);
+                                PendingIntent pendingIntent=PendingIntent.getActivity(context,0,notification_intent,0);
+                                builder=new NotificationCompat.Builder(context);
+                                builder.setSmallIcon(R.drawable.ic_insert_chart_black_24dp)
+                                        .setAutoCancel(false)
+                                        .setCustomBigContentView(remoteViews)
+                                        .setContentIntent(pendingIntent);
+                               notificationManager.notify(123,builder.build());
+                            }catch(NullPointerException e)
+                            {}
                             mediaPlayer.setOnCompletionListener(new MediaPlayer.OnCompletionListener() {
                                 @Override
                                 public void onCompletion(MediaPlayer mediaPlayer) {
@@ -321,9 +348,9 @@ public class MainActivity extends AppCompatActivity implements AudioManager.OnAu
     private void checkpermission() {
         if(Build.VERSION.SDK_INT>=23)
         {
-            if(ActivityCompat.checkSelfPermission(this, Manifest.permission.READ_EXTERNAL_STORAGE)!= PackageManager.PERMISSION_GRANTED)
+            if(ActivityCompat.checkSelfPermission(this, Manifest.permission.READ_EXTERNAL_STORAGE)!= PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_NOTIFICATION_POLICY)!= PackageManager.PERMISSION_GRANTED)
             {
-                requestPermissions(new String[]{Manifest.permission.READ_EXTERNAL_STORAGE},123);
+                requestPermissions(new String[]{Manifest.permission.READ_EXTERNAL_STORAGE,Manifest.permission.ACCESS_NOTIFICATION_POLICY},123);
             }
 
         }
@@ -340,7 +367,7 @@ public class MainActivity extends AppCompatActivity implements AudioManager.OnAu
         switch (requestCode)
         {
             case 123:
-                if(grantResults[0]==PackageManager.PERMISSION_GRANTED)
+                if(grantResults[0]==PackageManager.PERMISSION_GRANTED && grantResults[1]==PackageManager.PERMISSION_GRANTED)
                 {
                     loadSong();
                 }else
@@ -348,6 +375,8 @@ public class MainActivity extends AppCompatActivity implements AudioManager.OnAu
                     Toast.makeText(this,"Permission Denied", LENGTH_LONG).show();
                 checkpermission();
                 }break;
+
+
                 default: super.onRequestPermissionsResult(requestCode, permissions, grantResults);
         }
 

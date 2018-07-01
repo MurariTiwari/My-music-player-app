@@ -125,8 +125,10 @@ public class MainActivity extends AppCompatActivity implements AudioManager.OnAu
                  artist.setText(s.artist);
                  bp=true;
                  pp.setBackgroundResource(R.drawable.ic_pause_circle_filled_black_24dp);
-                 l.setBackground( Drawable.createFromPath(String.valueOf(Uri.parse(s.path))));
-                 l.getBackground().setAlpha(60);
+                 try {
+                     l.setBackground(Drawable.createFromPath(String.valueOf(Uri.parse(s.path))));
+                 }catch(NullPointerException e)
+                 {}l.getBackground().setAlpha(60);
                  startSong(s,sid);
              }
          });
@@ -142,8 +144,10 @@ public class MainActivity extends AppCompatActivity implements AudioManager.OnAu
                  artist.setText(s.artist);
                  bp=true;
                  pp.setBackgroundResource(R.drawable.ic_pause_circle_filled_black_24dp);
-                 l.setBackground( Drawable.createFromPath(String.valueOf(Uri.parse(s.path))));
-                 l.getBackground().setAlpha(60);
+                 try {
+                     l.setBackground(Drawable.createFromPath(String.valueOf(Uri.parse(s.path))));
+                 }catch(NullPointerException e)
+                 {}l.getBackground().setAlpha(60);
                  startSong(s,sid);
              }
          });
@@ -173,7 +177,7 @@ public class MainActivity extends AppCompatActivity implements AudioManager.OnAu
 
 
         if(_song.size()==0) {
-            int b = preferences.getInt("sid", 0);
+            int b = preferences.getInt("b", 0);
             if(b==0)
             {
                 SharedPreferences.Editor editor = preferences.edit();
@@ -181,7 +185,12 @@ public class MainActivity extends AppCompatActivity implements AudioManager.OnAu
                 editor.commit();
             }
             else {
+                loadSong();
             }
+        }else{
+            songAdapter=new SongAdapter(_song,this);
+            recyclerView.setAdapter(songAdapter);
+            setFirst();
         }
 
         AudioManager manager= (AudioManager) this.getSystemService(this.AUDIO_SERVICE);
@@ -440,8 +449,13 @@ public class MainActivity extends AppCompatActivity implements AudioManager.OnAu
         artist.setText(s.artist);
         bp=true;
         pp.setBackgroundResource(R.drawable.ic_pause_circle_filled_black_24dp);
-       l.setBackground( Drawable.createFromPath(String.valueOf(Uri.parse(s.path))));
-        l.getBackground().setAlpha(60);
+        try {
+            l.setBackground(Drawable.createFromPath(String.valueOf(Uri.parse(s.path))));
+        }catch (NullPointerException e)
+        {
+
+        }
+       l.getBackground().setAlpha(60);
         startSong(s,sid);
     }
 
